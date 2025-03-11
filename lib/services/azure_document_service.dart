@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:carlog/car_details_model.dart';
+import 'package:carlog/models/car_details_model.dart';
 import 'package:carlog/services/image_compression_service.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;

@@ -1,5 +1,5 @@
-import 'package:carlog/add_car_screen.dart';
-import 'package:carlog/car_details_model.dart';
+import 'package:carlog/screens/car_add/add_car_screen.dart';
+import 'package:carlog/models/car_details_model.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 

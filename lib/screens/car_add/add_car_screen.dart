@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:carlog/car_details_model.dart';
+import 'package:carlog/models/car_details_model.dart';
 import 'package:carlog/services/azure_document_service.dart';
 import 'package:carlog/widgets/form_section.dart';
 import 'package:carlog/widgets/form_text_field.dart';
@@ -31,10 +31,10 @@ class AddCarScreen extends StatefulWidget {
   final CarScreenType type;
 
   @override
-  _AddCarScreenState createState() => _AddCarScreenState();
+  AddCarScreenState createState() => AddCarScreenState();
 }
 
-class _AddCarScreenState extends State<AddCarScreen> {
+class AddCarScreenState extends State<AddCarScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _ownerController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
@@ -48,7 +48,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
   final TextEditingController _typeOfFuelController = TextEditingController();
   final TextEditingController _repairController = TextEditingController();
   File? _image;
-  bool _isLoading = false;
 
   @override
   void initState() {
@@ -136,7 +135,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
 
       if (!context.mounted) return;
 
-      // Show loading overlay
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -170,57 +168,8 @@ class _AddCarScreenState extends State<AddCarScreen> {
     }
   }
 
-  void _doEdit(CarScreenType type) {
-    switch (type) {
-      case Add():
-        _editCar(null);
-      case Edit():
-        _editCar((type).car);
-    }
-  }
-
-  void _editCar(CarDetails? car) {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
-
-    DocumentReference<Map<String, dynamic>> carDoc;
-
-    if (car == null) {
-      carDoc = FirebaseFirestore.instance.collection('cars').doc();
-    } else {
-      carDoc = FirebaseFirestore.instance.collection('cars').doc(car.id);
-    }
-
-    final updatedCar = CarDetails(
-      id: carDoc.id,
-      ownerName: _ownerController.text.trim(),
-      licensePlate: _licenseController.text.trim(),
-      city: _cityController.text.trim(),
-      userId: FirebaseAuth.instance.currentUser!.uid,
-      address: _addressController.text.trim(),
-      make: _makeController.text.trim(),
-      model: _modelController.text.trim(),
-      chassisNumber: _chassisController.text.trim(),
-      engineDisplacement: _engineDisplacementController.text.trim(),
-      enginePower: _enginePowerController.text.trim(),
-      typeOfFuel: _typeOfFuelController.text.trim(),
-      repairNotes: _repairController.text.trim(),
-    );
-
-    if (car == null) {
-      FirebaseFirestore.instance.collection('cars').add(updatedCar.toFirestore());
-    } else {
-      carDoc.update(updatedCar.toFirestore());
-    }
-    widget.onCarUpdate();
-    Navigator.pop(context);
-  }
-
   Future<void> _saveCar() async {
     if (!_formKey.currentState!.validate()) return;
-
-    setState(() => _isLoading = true);
 
     try {
       final userId = FirebaseAuth.instance.currentUser?.uid;
@@ -259,10 +208,6 @@ class _AddCarScreenState extends State<AddCarScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Došlo je do greške prilikom čuvanja podataka')),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
       }
     }
   }
