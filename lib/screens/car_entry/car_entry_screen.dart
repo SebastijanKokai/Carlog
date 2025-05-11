@@ -6,12 +6,12 @@ import 'package:carlog/screens/car_entry/widgets/additional_info_section.dart';
 import 'package:carlog/screens/car_entry/widgets/owner_data_section.dart';
 import 'package:carlog/screens/car_entry/widgets/vehicle_data_section.dart';
 import 'package:carlog/services/azure_document_service.dart';
+import 'package:carlog/services/car_service.dart';
 import 'package:carlog/widgets/image_picker_section.dart';
 import 'package:carlog/widgets/loading_overlay.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:carlog/widgets/submit_button.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 sealed class CarScreenType {
   const CarScreenType();
@@ -39,6 +39,7 @@ class CarEntryScreen extends StatefulWidget {
 class CarEntryScreenState extends State<CarEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   late final CarEntryFormController _formController;
+  final _carService = CarService();
   File? _image;
 
   @override
@@ -111,32 +112,25 @@ class CarEntryScreenState extends State<CarEntryScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) {
-        throw Exception('User not authenticated');
-      }
-
       final carDetails = _formController.getCurrentFormData(
-        userId,
         id: widget.type is Edit ? (widget.type as Edit).car.id : null,
       );
 
-      if (widget.type is Add) {
-        await FirebaseFirestore.instance.collection('cars').add(carDetails.toFirestore());
-      } else if (widget.type is Edit) {
-        await FirebaseFirestore.instance.collection('cars').doc(carDetails.id).update(carDetails.toFirestore());
-      }
+      await _carService.saveCar(
+        carDetails,
+        existingId: widget.type is Edit ? (widget.type as Edit).car.id : null,
+      );
 
-      if (mounted) {
-        widget.onCarUpdate();
-        Navigator.pop(context);
-      }
+      if (!mounted) return;
+
+      widget.onCarUpdate();
+      Navigator.pop(context);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Došlo je do greške prilikom čuvanja podataka')),
-        );
-      }
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Došlo je do greške prilikom čuvanja podataka')),
+      );
     }
   }
 
@@ -173,20 +167,9 @@ class CarEntryScreenState extends State<CarEntryScreen> {
                     const SizedBox(height: 24),
                     AdditionalInfoSection(formController: _formController),
                     const SizedBox(height: 32),
-                    ElevatedButton(
+                    SubmitButton(
                       onPressed: () => _saveCar(),
-                      style: ElevatedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: Theme.of(context).colorScheme.primary,
-                        foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'SAČUVAJ',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
+                      text: 'SAČUVAJ',
                     ),
                   ],
                 ),

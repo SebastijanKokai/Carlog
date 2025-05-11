@@ -66,7 +66,7 @@ class CarEntryFormController {
     }
   }
 
-  CarDetails getCurrentFormData(String userId, {String? id}) {
+  CarDetails getCurrentFormData({String? id}) {
     return CarDetails(
       id: id ?? '',
       ownerName: ownerController.text,
@@ -80,7 +80,7 @@ class CarEntryFormController {
       enginePower: enginePowerController.text,
       typeOfFuel: typeOfFuelController.text,
       repairNotes: repairController.text,
-      userId: userId,
+      userId: '',
     );
   }
 

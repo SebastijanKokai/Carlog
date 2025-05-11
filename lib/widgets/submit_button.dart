@@ -8,7 +8,7 @@ class SubmitButton extends StatelessWidget {
 
   const SubmitButton({
     super.key,
-    required this.isLoading,
+    this.isLoading = false,
     required this.onPressed,
     required this.text,
   });
