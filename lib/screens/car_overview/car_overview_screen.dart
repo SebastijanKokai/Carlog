@@ -4,11 +4,11 @@ import 'package:flutter/foundation.dart';
 import 'package:carlog/screens/car_entry/car_entry_screen.dart';
 import 'package:carlog/models/car_details_model.dart';
 import 'package:carlog/screens/car_overview/widgets/car_list_body.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_debouncer/flutter_debouncer.dart';
-import 'package:carlog/utils/data_migration.dart';
+import 'package:carlog/services/car_search_service.dart';
+import 'package:carlog/services/data_migration_service.dart';
 
 class CarOverviewScreen extends StatefulWidget {
   const CarOverviewScreen({super.key});
@@ -21,6 +21,8 @@ class _CarOverviewScreenState extends State<CarOverviewScreen> {
   final TextEditingController _searchController = TextEditingController();
   final Debouncer _debouncer = Debouncer();
   final Duration _debounceDuration = Duration(milliseconds: 200);
+  final CarSearchService _searchService = CarSearchService();
+  final DataMigrationService _migrationService = DataMigrationService();
   List<CarDetails> _cars = [];
 
   @override
@@ -38,50 +40,45 @@ class _CarOverviewScreenState extends State<CarOverviewScreen> {
   Future<void> _initSearchListener() async {
     _searchController.addListener(() {
       _debouncer.debounce(
-          duration: _debounceDuration,
-          onDebounce: () async {
-            try {
-              final text = _searchController.text.toLowerCase();
-              final userId = FirebaseAuth.instance.currentUser?.uid;
-              if (userId == null) return;
+        duration: _debounceDuration,
+        onDebounce: () async {
+          try {
+            final text = _searchController.text;
+            final results = await _searchService.searchCars(text);
 
-              if (text.isEmpty) {
-                await _fetchInitialCarDetails();
-                return;
-              }
-
-              final collection = await FirebaseFirestore.instance
-                  .collection('cars')
-                  .where('userId', isEqualTo: userId)
-                  .where('ownerName_insensitive',
-                      isGreaterThanOrEqualTo: text,
-                      isLessThan: text.substring(0, text.length - 1) +
-                          String.fromCharCode(text.codeUnitAt(text.length - 1) + 1))
-                  .get();
-
-              setState(() {
-                _cars = collection.docs.map((doc) => CarDetails.fromFirestore(doc, null)).toList();
-              });
-            } catch (e) {
-              print(e);
+            if (mounted) {
+              setState(() => _cars = results);
             }
-          });
+          } catch (e) {
+            if (!mounted) return;
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Došlo je do greške prilikom pretrage'),
+              ),
+            );
+          }
+        },
+      );
     });
   }
 
   Future<void> _fetchInitialCarDetails() async {
     try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) return;
+      final results = await _searchService.searchCars('');
 
-      final collection = await FirebaseFirestore.instance.collection('cars').where('userId', isEqualTo: userId).get();
-
-      setState(() {
-        _cars = collection.docs.map((doc) => CarDetails.fromFirestore(doc, null)).toList();
-      });
-      _searchController.clear();
+      if (mounted) {
+        setState(() => _cars = results);
+        _searchController.clear();
+      }
     } catch (e) {
-      print(e);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Došlo je do greške prilikom učitavanja podataka'),
+          ),
+        );
+      }
     }
   }
 
@@ -99,10 +96,7 @@ class _CarOverviewScreenState extends State<CarOverviewScreen> {
 
   Future<void> _migrateData() async {
     try {
-      final userId = FirebaseAuth.instance.currentUser?.uid;
-      if (userId == null) return;
-
-      final unmigratedCount = await DataMigration.checkUnmigratedCarsCount();
+      final unmigratedCount = await _migrationService.getUnmigratedCarsCount();
 
       if (!mounted) return;
 
@@ -113,54 +107,21 @@ class _CarOverviewScreenState extends State<CarOverviewScreen> {
         return;
       }
 
-      final shouldMigrate = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Potvrda migracije'),
-          content: Text('Pronađeno je $unmigratedCount automobila bez korisnika. '
-              'Da li želite da ih dodelite trenutnom nalogu?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Ne'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('Da'),
-            ),
-          ],
-        ),
+      final shouldMigrate = await _migrationService.showMigrationConfirmationDialog(
+        context,
+        unmigratedCount,
       );
 
-      if (!mounted || shouldMigrate != true) return;
+      if (!mounted || !shouldMigrate) return;
 
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 16),
-              Text('Migracija podataka u toku...'),
-            ],
-          ),
-        ),
-      );
+      _migrationService.showMigrationProgressDialog(context);
 
-      await DataMigration.migrateExistingCarsToUser(userId);
+      await _migrationService.migrateCars();
 
       if (!mounted) return;
 
       Navigator.of(context).pop();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Uspešno migrirano $unmigratedCount automobila'),
-          duration: const Duration(seconds: 4),
-        ),
-      );
-
+      _migrationService.showMigrationSuccessSnackBar(context, unmigratedCount);
       await _fetchInitialCarDetails();
     } catch (e) {
       if (!mounted) return;
@@ -169,12 +130,7 @@ class _CarOverviewScreenState extends State<CarOverviewScreen> {
         Navigator.of(context).pop();
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Došlo je do greške prilikom migracije podataka'),
-          duration: Duration(seconds: 4),
-        ),
-      );
+      _migrationService.showMigrationErrorSnackBar(context);
     }
   }
 
