@@ -11,6 +11,32 @@ Carlog is a Flutter app that scans and extracts data from driver's permit licens
 - Sync data in real-time with Firebase Firestore.
 - Firestore handles **offline mode**, allowing users to access and update data without an internet connection.
 
+## Screenshots
+<table>
+  <tr>
+    <td align="center">
+      <img src="assets/screenshots/login_screen.jpg" alt="Login Screen" width="200"/>
+      <br>
+      <b>Login Screen</b>
+    </td>
+    <td align="center">
+      <img src="assets/screenshots/home_screen.jpg" alt="Home Screen" width="200"/>
+      <br>
+      <b>Home Screen</b>
+    </td>
+    <td align="center">
+      <img src="assets/screenshots/scan_screen.jpg" alt="Scan Screen" width="200"/>
+      <br>
+      <b>Scan Screen</b>
+    </td>
+    <td align="center">
+      <img src="assets/screenshots/details_screen.jpg" alt="Details Screen" width="200"/>
+      <br>
+      <b>Details Screen</b>
+    </td>
+  </tr>
+</table>
+
 ## Tech Stack
 - **Flutter** (Dart)
 - **Firebase** (Authentication, Firestore)
