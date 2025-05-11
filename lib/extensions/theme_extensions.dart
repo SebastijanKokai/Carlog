@@ -64,4 +64,22 @@ extension ThemeX on BuildContext {
         color: colorScheme.primary.withAlpha(26),
         borderRadius: BorderRadius.circular(8),
       );
+
+  InputBorder get formFieldBorder => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: colorScheme.outline),
+      );
+
+  InputBorder get formFieldEnabledBorder => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(color: colorScheme.outline.withAlpha(128)),
+      );
+
+  InputBorder get formFieldFocusedBorder => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(8),
+        borderSide: BorderSide(
+          color: colorScheme.primary,
+          width: 2,
+        ),
+      );
 }

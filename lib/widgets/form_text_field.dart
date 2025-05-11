@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:carlog/extensions/theme_extensions.dart';
 
 class FormTextField extends StatelessWidget {
   const FormTextField({
@@ -26,28 +27,12 @@ class FormTextField extends StatelessWidget {
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.outline,
-            ),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.outline.withOpacity(0.5),
-            ),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(
-              color: Theme.of(context).colorScheme.primary,
-              width: 2,
-            ),
-          ),
+          prefixIcon: Icon(icon, color: context.primaryColor),
+          border: context.formFieldBorder,
+          enabledBorder: context.formFieldEnabledBorder,
+          focusedBorder: context.formFieldFocusedBorder,
           filled: true,
-          fillColor: Theme.of(context).colorScheme.surface,
+          fillColor: context.surfaceColor,
         ),
       ),
     );
