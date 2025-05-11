@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:carlog/services/azure_document_service/azure_document_service.dart';
 import 'package:carlog/services/azure_document_service/config/azure_config.dart';
 import 'package:carlog/services/azure_document_service/exceptions/document_service_exceptions.dart';
@@ -11,12 +9,14 @@ import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
 
 import 'azure_document_service_test.mocks.dart';
+import 'helpers/test_helpers.dart';
 
 @GenerateMocks([http.Client, ImageCompressionService, File])
 void main() {
   late MockClient mockHttpClient;
   late MockImageCompressionService mockImageCompressionService;
   late MockFile mockImageFile;
+  late TestHelpers testHelpers;
   late AzureDocumentService service;
 
   const config = AzureConfig(
@@ -29,6 +29,10 @@ void main() {
     mockHttpClient = MockClient();
     mockImageCompressionService = MockImageCompressionService();
     mockImageFile = MockFile();
+    testHelpers = TestHelpers(
+      mockHttpClient: mockHttpClient,
+      config: config,
+    );
     service = AzureDocumentService(
       config: config,
       httpClient: mockHttpClient,
@@ -40,112 +44,13 @@ void main() {
     mockHttpClient.close();
   });
 
-  Uint8List getTestImageBytes() => Uint8List.fromList([1, 2, 3, 4]);
-
-  Map<String, dynamic> getMockAnalysisResult() => {
-        'status': 'succeeded',
-        'analyzeResult': {
-          'documents': [
-            {
-              'fields': {
-                'firstName': {'value': 'John'},
-                'lastName': {'value': 'Doe'},
-              }
-            }
-          ]
-        }
-      };
-
-  http.Response getStartAnalysisResponse() => http.Response(
-        '',
-        202,
-        headers: {'operation-location': 'https://test-endpoint.com/result'},
-      );
-
-  http.Response getResultResponse(Map<String, dynamic> result) => http.Response(
-        jsonEncode(result),
-        200,
-      );
-
-  void setupImageFile({int size = 1024}) {
-    final imageBytes = getTestImageBytes();
-    when(mockImageFile.readAsBytes()).thenAnswer((_) async => imageBytes);
-    when(mockImageFile.length()).thenAnswer((_) async => size);
-  }
-
-  void setupHttpResponses({
-    required http.Response startResponse,
-    required http.Response resultResponse,
-  }) {
-    when(mockHttpClient.post(
-      any,
-      headers: anyNamed('headers'),
-      body: anyNamed('body'),
-    )).thenAnswer((_) async => startResponse);
-
-    when(mockHttpClient.get(
-      any,
-      headers: anyNamed('headers'),
-    )).thenAnswer((_) async => resultResponse);
-  }
-
-  void setupSuccessfulPostResponse({
-    required String url,
-    required List<int> imageBytes,
-    required http.Response response,
-  }) {
-    when(mockHttpClient.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': config.apiKey,
-      },
-      body: jsonEncode({
-        'base64Source': base64Encode(imageBytes),
-      }),
-    )).thenAnswer((_) async => response);
-  }
-
-  void setupFailedPostResponse({
-    required String url,
-    required List<int> imageBytes,
-    required int statusCode,
-  }) {
-    when(mockHttpClient.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': config.apiKey,
-      },
-      body: jsonEncode({
-        'base64Source': base64Encode(imageBytes),
-      }),
-    )).thenAnswer((_) async => http.Response('', statusCode));
-  }
-
-  void verifyPostRequest({
-    required String url,
-    required List<int> imageBytes,
-  }) {
-    verify(mockHttpClient.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': config.apiKey,
-      },
-      body: jsonEncode({
-        'base64Source': base64Encode(imageBytes),
-      }),
-    )).called(1);
-  }
-
   group('analyzeDriverLicense', () {
     test('should successfully analyze driver license', () async {
-      setupImageFile();
-      final analysisResult = getMockAnalysisResult();
-      setupHttpResponses(
-        startResponse: getStartAnalysisResponse(),
-        resultResponse: getResultResponse(analysisResult),
+      testHelpers.setupImageFile(mockImageFile);
+      final analysisResult = testHelpers.getMockAnalysisResult();
+      testHelpers.setupHttpResponses(
+        startResponse: testHelpers.getStartAnalysisResponse(),
+        resultResponse: testHelpers.getResultResponse(analysisResult),
       );
 
       final result = await service.analyzeDriverLicense(mockImageFile);
@@ -153,14 +58,14 @@ void main() {
     });
 
     test('should compress image if size is greater than 4MB', () async {
-      setupImageFile(size: 5 * 1024 * 1024);
+      testHelpers.setupImageFile(mockImageFile, size: 5 * 1024 * 1024);
       final imageBytes = [1, 2, 3, 4];
       when(mockImageCompressionService.compressImageFile(mockImageFile)).thenAnswer((_) async => imageBytes);
 
-      final analysisResult = getMockAnalysisResult();
-      setupHttpResponses(
-        startResponse: getStartAnalysisResponse(),
-        resultResponse: getResultResponse(analysisResult),
+      final analysisResult = testHelpers.getMockAnalysisResult();
+      testHelpers.setupHttpResponses(
+        startResponse: testHelpers.getStartAnalysisResponse(),
+        resultResponse: testHelpers.getResultResponse(analysisResult),
       );
 
       final result = await service.analyzeDriverLicense(mockImageFile);
@@ -170,7 +75,7 @@ void main() {
     });
 
     test('should throw DocumentAnalysisException when start analysis fails', () async {
-      setupImageFile();
+      testHelpers.setupImageFile(mockImageFile);
       when(mockHttpClient.post(
         any,
         headers: anyNamed('headers'),
@@ -184,7 +89,7 @@ void main() {
     });
 
     test('should throw DocumentAnalysisException when operation location is missing', () async {
-      setupImageFile();
+      testHelpers.setupImageFile(mockImageFile);
       when(mockHttpClient.post(
         any,
         headers: anyNamed('headers'),
@@ -198,15 +103,15 @@ void main() {
     });
 
     test('should throw DocumentAnalysisException when analysis fails', () async {
-      setupImageFile();
+      testHelpers.setupImageFile(mockImageFile);
       final failedResult = {
         'status': 'failed',
         'error': {'message': 'Analysis failed'},
       };
 
-      setupHttpResponses(
-        startResponse: getStartAnalysisResponse(),
-        resultResponse: getResultResponse(failedResult),
+      testHelpers.setupHttpResponses(
+        startResponse: testHelpers.getStartAnalysisResponse(),
+        resultResponse: testHelpers.getResultResponse(failedResult),
       );
 
       expect(
@@ -218,9 +123,9 @@ void main() {
 
   group('startAnalysis', () {
     test('should successfully start analysis', () async {
-      final imageBytes = getTestImageBytes();
-      final expectedResponse = getStartAnalysisResponse();
-      setupSuccessfulPostResponse(
+      final imageBytes = testHelpers.getTestImageBytes();
+      final expectedResponse = testHelpers.getStartAnalysisResponse();
+      testHelpers.setupSuccessfulPostResponse(
         url: 'https://test-endpoint.com/test-model',
         imageBytes: imageBytes,
         response: expectedResponse,
@@ -230,15 +135,15 @@ void main() {
 
       expect(response.statusCode, equals(202));
       expect(response.headers['operation-location'], equals('https://test-endpoint.com/result'));
-      verifyPostRequest(
+      testHelpers.verifyPostRequest(
         url: 'https://test-endpoint.com/test-model',
         imageBytes: imageBytes,
       );
     });
 
     test('should throw DocumentAnalysisException when status code is not 202', () async {
-      final imageBytes = getTestImageBytes();
-      setupFailedPostResponse(
+      final imageBytes = testHelpers.getTestImageBytes();
+      testHelpers.setupFailedPostResponse(
         url: 'https://test-endpoint.com/test-model',
         imageBytes: imageBytes,
         statusCode: 400,
