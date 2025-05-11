@@ -1,7 +1,7 @@
 import 'dart:io';
 
-import 'package:carlog/models/car_details_model.dart';
 import 'package:carlog/screens/car_entry/car_entry_form_controller.dart';
+import 'package:carlog/screens/car_entry/car_screen_type.dart';
 import 'package:carlog/screens/car_entry/widgets/additional_info_section.dart';
 import 'package:carlog/screens/car_entry/widgets/owner_data_section.dart';
 import 'package:carlog/screens/car_entry/widgets/vehicle_data_section.dart';
@@ -12,19 +12,6 @@ import 'package:carlog/widgets/loading_overlay.dart';
 import 'package:carlog/widgets/submit_button.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-
-sealed class CarScreenType {
-  const CarScreenType();
-}
-
-class Add extends CarScreenType {
-  Add();
-}
-
-class Edit extends CarScreenType {
-  Edit(this.car);
-  final CarDetails car;
-}
 
 class CarEntryScreen extends StatefulWidget {
   const CarEntryScreen({required this.onCarUpdate, required this.type, super.key});

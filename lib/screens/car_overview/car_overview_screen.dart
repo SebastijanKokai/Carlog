@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:carlog/screens/car_entry/car_screen_type.dart';
 import 'package:flutter/foundation.dart';
 import 'package:carlog/screens/car_entry/car_entry_screen.dart';
 import 'package:carlog/models/car_details_model.dart';
