@@ -34,8 +34,16 @@ ScanKeeper is a Flutter app that scans and extracts data from driver's permit li
       <br>
       <b>Details Screen</b>
     </td>
+    <td align="center">
+      <img src="assets/screenshots/camera_screen.jpg" alt="Camera Screen" width="200"/>
+      <br>
+      <b>Camera Screen</b>
+    </td>
   </tr>
 </table>
+
+## Demo
+![App Demo](assets/screenshots/demo.gif)
 
 ## Tech Stack
 - **Flutter** (Dart)
