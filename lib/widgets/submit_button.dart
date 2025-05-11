@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:carlog/widgets/loading_indicator.dart';
+import 'package:carlog/widgets/loading/loading_indicator.dart';
 
 class SubmitButton extends StatelessWidget {
   final bool isLoading;

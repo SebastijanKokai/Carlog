@@ -1,8 +1,8 @@
 import 'dart:io';
+import 'package:carlog/widgets/image_picker/image_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:carlog/extensions/theme_extensions.dart';
-import 'package:carlog/widgets/image_picker_button.dart';
-import 'package:carlog/widgets/image_preview.dart';
+import 'package:carlog/widgets/image_picker/image_picker_button.dart';
 
 class ImagePickerSection extends StatelessWidget {
   const ImagePickerSection({
