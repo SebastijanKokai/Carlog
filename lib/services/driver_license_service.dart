@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:carlog/models/car_details_model.dart';
-import 'package:carlog/services/azure_document_service.dart';
+import 'package:carlog/services/azure_document_service/azure_document_service.dart';
 
 class DriverLicenseService {
   final ImagePicker _picker = ImagePicker();
