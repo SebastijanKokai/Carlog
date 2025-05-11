@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:carlog/models/car_details_model.dart';
+import 'package:carlog/screens/car_entry/car_entry_form_controller.dart';
 import 'package:carlog/services/azure_document_service.dart';
 import 'package:carlog/widgets/form_section.dart';
 import 'package:carlog/widgets/form_text_field.dart';
@@ -36,85 +37,22 @@ class CarEntryScreen extends StatefulWidget {
 
 class CarEntryScreenState extends State<CarEntryScreen> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _ownerController = TextEditingController();
-  final TextEditingController _licenseController = TextEditingController();
-  final TextEditingController _cityController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _makeController = TextEditingController();
-  final TextEditingController _modelController = TextEditingController();
-  final TextEditingController _chassisController = TextEditingController();
-  final TextEditingController _engineDisplacementController = TextEditingController();
-  final TextEditingController _enginePowerController = TextEditingController();
-  final TextEditingController _typeOfFuelController = TextEditingController();
-  final TextEditingController _repairController = TextEditingController();
+  late final CarEntryFormController _formController;
   File? _image;
 
   @override
   void initState() {
     super.initState();
+    _formController = CarEntryFormController();
     if (widget.type is Edit) {
-      final car = (widget.type as Edit).car;
-      _ownerController.text = car.ownerName;
-      _licenseController.text = car.licensePlate ?? '';
-      _cityController.text = car.city ?? '';
-      _addressController.text = car.address ?? '';
-      _makeController.text = car.make ?? '';
-      _modelController.text = car.model ?? '';
-      _chassisController.text = car.chassisNumber ?? '';
-      _engineDisplacementController.text = car.engineDisplacement ?? '';
-      _enginePowerController.text = car.enginePower ?? '';
-      _typeOfFuelController.text = car.typeOfFuel ?? '';
-      _repairController.text = car.repairNotes ?? '';
+      _formController.fillFromCarDetails((widget.type as Edit).car);
     }
   }
 
   @override
   void dispose() {
-    _ownerController.dispose();
-    _licenseController.dispose();
-    _cityController.dispose();
-    _addressController.dispose();
-    _makeController.dispose();
-    _modelController.dispose();
-    _chassisController.dispose();
-    _engineDisplacementController.dispose();
-    _enginePowerController.dispose();
-    _typeOfFuelController.dispose();
-    _repairController.dispose();
+    _formController.dispose();
     super.dispose();
-  }
-
-  void _fillFormFromRegistration(CarDetails carDetails) {
-    if (carDetails.make?.isNotEmpty ?? false) {
-      _makeController.text = carDetails.make!;
-    }
-    if (carDetails.model?.isNotEmpty ?? false) {
-      _modelController.text = carDetails.model!;
-    }
-    if (carDetails.chassisNumber?.isNotEmpty ?? false) {
-      _chassisController.text = carDetails.chassisNumber!;
-    }
-    if (carDetails.engineDisplacement?.isNotEmpty ?? false) {
-      _engineDisplacementController.text = carDetails.engineDisplacement!;
-    }
-    if (carDetails.enginePower?.isNotEmpty ?? false) {
-      _enginePowerController.text = carDetails.enginePower!;
-    }
-    if (carDetails.typeOfFuel?.isNotEmpty ?? false) {
-      _typeOfFuelController.text = carDetails.typeOfFuel!;
-    }
-    if (carDetails.licensePlate?.isNotEmpty ?? false) {
-      _licenseController.text = carDetails.licensePlate!;
-    }
-    if (carDetails.ownerName.isNotEmpty) {
-      _ownerController.text = carDetails.ownerName;
-    }
-    if (carDetails.city?.isNotEmpty ?? false) {
-      _cityController.text = carDetails.city!;
-    }
-    if (carDetails.address?.isNotEmpty ?? false) {
-      _addressController.text = carDetails.address!;
-    }
   }
 
   Future<void> scanDriverLicense(BuildContext context, ImageSource source) async {
@@ -146,7 +84,7 @@ class CarEntryScreenState extends State<CarEntryScreen> {
       final azureService = AzureDocumentService.getInstance();
       final result = await azureService.analyzeDriverLicense(File(image.path));
       final carDetails = azureService.extractDriverLicenseFields(result);
-      _fillFormFromRegistration(carDetails);
+      _formController.fillFromRegistration(carDetails);
 
       if (!context.mounted) return;
 
@@ -177,20 +115,9 @@ class CarEntryScreenState extends State<CarEntryScreen> {
         throw Exception('User not authenticated');
       }
 
-      final carDetails = CarDetails(
-        id: widget.type is Edit ? (widget.type as Edit).car.id : '',
-        ownerName: _ownerController.text,
-        licensePlate: _licenseController.text,
-        city: _cityController.text,
-        address: _addressController.text,
-        make: _makeController.text,
-        model: _modelController.text,
-        chassisNumber: _chassisController.text,
-        engineDisplacement: _engineDisplacementController.text,
-        enginePower: _enginePowerController.text,
-        typeOfFuel: _typeOfFuelController.text,
-        repairNotes: _repairController.text,
-        userId: userId,
+      final carDetails = _formController.getCurrentFormData(
+        userId,
+        id: widget.type is Edit ? (widget.type as Edit).car.id : null,
       );
 
       if (widget.type is Add) {
@@ -243,18 +170,18 @@ class CarEntryScreenState extends State<CarEntryScreen> {
                       title: 'Podaci o vlasniku',
                       fields: [
                         FormTextField(
-                          controller: _ownerController,
+                          controller: _formController.ownerController,
                           label: 'Ime vlasnika',
                           icon: Icons.person,
-                          validator: (value) => value!.isEmpty ? 'Unesi ime vlasnika' : null,
+                          validator: _formController.validateOwner,
                         ),
                         FormTextField(
-                          controller: _cityController,
+                          controller: _formController.cityController,
                           label: 'Grad',
                           icon: Icons.location_city,
                         ),
                         FormTextField(
-                          controller: _addressController,
+                          controller: _formController.addressController,
                           label: 'Adresa',
                           icon: Icons.home,
                         ),
@@ -265,39 +192,42 @@ class CarEntryScreenState extends State<CarEntryScreen> {
                       title: 'Podaci o vozilu',
                       fields: [
                         FormTextField(
-                          controller: _makeController,
+                          controller: _formController.makeController,
                           label: 'Marka',
                           icon: Icons.directions_car,
+                          validator: _formController.validateMake,
                         ),
                         FormTextField(
-                          controller: _modelController,
+                          controller: _formController.modelController,
                           label: 'Model',
                           icon: Icons.car_repair,
+                          validator: _formController.validateModel,
                         ),
                         FormTextField(
-                          controller: _chassisController,
+                          controller: _formController.chassisController,
                           label: 'Broj šasije',
                           icon: Icons.numbers,
                         ),
                         FormTextField(
-                          controller: _engineDisplacementController,
+                          controller: _formController.engineDisplacementController,
                           label: 'Zapremina motora',
                           icon: Icons.speed,
                         ),
                         FormTextField(
-                          controller: _enginePowerController,
+                          controller: _formController.enginePowerController,
                           label: 'Snaga motora',
                           icon: Icons.power,
                         ),
                         FormTextField(
-                          controller: _typeOfFuelController,
+                          controller: _formController.typeOfFuelController,
                           label: 'Vrsta goriva',
                           icon: Icons.local_gas_station,
                         ),
                         FormTextField(
-                          controller: _licenseController,
+                          controller: _formController.licenseController,
                           label: 'Registracione tablice',
                           icon: Icons.badge,
+                          validator: _formController.validateLicense,
                         ),
                       ],
                     ),
@@ -306,7 +236,7 @@ class CarEntryScreenState extends State<CarEntryScreen> {
                       title: 'Dodatne informacije',
                       fields: [
                         FormTextField(
-                          controller: _repairController,
+                          controller: _formController.repairController,
                           label: 'Napomene',
                           icon: Icons.note_add,
                           maxLines: 3,
