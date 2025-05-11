@@ -24,7 +24,7 @@ class AzureDocumentService implements DocumentService {
       final imageBytes = await _prepareImage(imageFile);
       final url = _buildAnalysisUrl();
 
-      final response = await _startAnalysis(url, imageBytes);
+      final response = await startAnalysis(url, imageBytes);
       final operationLocation = _extractOperationLocation(response);
 
       return await _pollForResults(operationLocation);
@@ -49,7 +49,7 @@ class AzureDocumentService implements DocumentService {
     return '$baseEndpoint/${config.customModelEndpoint}';
   }
 
-  Future<http.Response> _startAnalysis(String url, List<int> imageBytes) async {
+  Future<http.Response> startAnalysis(String url, List<int> imageBytes) async {
     final response = await httpClient.post(
       Uri.parse(url),
       headers: {

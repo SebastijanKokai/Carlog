@@ -40,6 +40,8 @@ void main() {
     mockHttpClient.close();
   });
 
+  Uint8List getTestImageBytes() => Uint8List.fromList([1, 2, 3, 4]);
+
   Map<String, dynamic> getMockAnalysisResult() => {
         'status': 'succeeded',
         'analyzeResult': {
@@ -66,7 +68,7 @@ void main() {
       );
 
   void setupImageFile({int size = 1024}) {
-    final imageBytes = Uint8List.fromList([1, 2, 3, 4]);
+    final imageBytes = getTestImageBytes();
     when(mockImageFile.readAsBytes()).thenAnswer((_) async => imageBytes);
     when(mockImageFile.length()).thenAnswer((_) async => size);
   }
@@ -85,6 +87,72 @@ void main() {
       any,
       headers: anyNamed('headers'),
     )).thenAnswer((_) async => resultResponse);
+  }
+
+  void setupSuccessfulPostResponse({
+    required String url,
+    required List<int> imageBytes,
+    required http.Response response,
+  }) {
+    when(mockHttpClient.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': config.apiKey,
+      },
+      body: jsonEncode({
+        'base64Source': base64Encode(imageBytes),
+      }),
+    )).thenAnswer((_) async => response);
+  }
+
+  void setupFailedPostResponse({
+    required String url,
+    required List<int> imageBytes,
+    required int statusCode,
+  }) {
+    when(mockHttpClient.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': config.apiKey,
+      },
+      body: jsonEncode({
+        'base64Source': base64Encode(imageBytes),
+      }),
+    )).thenAnswer((_) async => http.Response('', statusCode));
+  }
+
+  void setupNetworkErrorPostResponse({
+    required String url,
+    required List<int> imageBytes,
+  }) {
+    when(mockHttpClient.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': config.apiKey,
+      },
+      body: jsonEncode({
+        'base64Source': base64Encode(imageBytes),
+      }),
+    )).thenThrow(Exception('Network error'));
+  }
+
+  void verifyPostRequest({
+    required String url,
+    required List<int> imageBytes,
+  }) {
+    verify(mockHttpClient.post(
+      Uri.parse(url),
+      headers: {
+        'Content-Type': 'application/json',
+        'Ocp-Apim-Subscription-Key': config.apiKey,
+      },
+      body: jsonEncode({
+        'base64Source': base64Encode(imageBytes),
+      }),
+    )).called(1);
   }
 
   group('analyzeDriverLicense', () {
@@ -160,6 +228,45 @@ void main() {
       expect(
         () => service.analyzeDriverLicense(mockImageFile),
         throwsA(isA<DocumentAnalysisException>()),
+      );
+    });
+  });
+
+  group('startAnalysis', () {
+    test('should successfully start analysis', () async {
+      final imageBytes = getTestImageBytes();
+      final expectedResponse = getStartAnalysisResponse();
+      setupSuccessfulPostResponse(
+        url: 'https://test-endpoint.com/test-model',
+        imageBytes: imageBytes,
+        response: expectedResponse,
+      );
+
+      final response = await service.startAnalysis('https://test-endpoint.com/test-model', imageBytes);
+
+      expect(response.statusCode, equals(202));
+      expect(response.headers['operation-location'], equals('https://test-endpoint.com/result'));
+      verifyPostRequest(
+        url: 'https://test-endpoint.com/test-model',
+        imageBytes: imageBytes,
+      );
+    });
+
+    test('should throw DocumentAnalysisException when status code is not 202', () async {
+      final imageBytes = getTestImageBytes();
+      setupFailedPostResponse(
+        url: 'https://test-endpoint.com/test-model',
+        imageBytes: imageBytes,
+        statusCode: 400,
+      );
+
+      expect(
+        () => service.startAnalysis('https://test-endpoint.com/test-model', imageBytes),
+        throwsA(isA<DocumentAnalysisException>().having(
+          (e) => e.message,
+          'message',
+          'Failed to start analysis. Status code: 400',
+        )),
       );
     });
   });
