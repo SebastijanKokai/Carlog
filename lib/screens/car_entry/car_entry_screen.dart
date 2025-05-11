@@ -5,7 +5,7 @@ import 'package:carlog/screens/car_entry/car_entry_form_controller.dart';
 import 'package:carlog/screens/car_entry/widgets/additional_info_section.dart';
 import 'package:carlog/screens/car_entry/widgets/owner_data_section.dart';
 import 'package:carlog/screens/car_entry/widgets/vehicle_data_section.dart';
-import 'package:carlog/services/azure_document_service.dart';
+import 'package:carlog/services/driver_license_service.dart';
 import 'package:carlog/services/car_service.dart';
 import 'package:carlog/widgets/image_picker_section.dart';
 import 'package:carlog/widgets/loading_overlay.dart';
@@ -40,6 +40,7 @@ class CarEntryScreenState extends State<CarEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   late final CarEntryFormController _formController;
   final _carService = CarService();
+  final _driverLicenseService = DriverLicenseService();
   File? _image;
 
   @override
@@ -57,54 +58,54 @@ class CarEntryScreenState extends State<CarEntryScreen> {
     super.dispose();
   }
 
-  Future<void> scanDriverLicense(BuildContext context, ImageSource source) async {
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const LoadingOverlay(
+        message: 'Skeniram saobraćajnu dozvolu...\nMolimo sačekajte',
+      ),
+    );
+  }
+
+  void _popIfPossible() {
+    if (Navigator.canPop(context)) {
+      Navigator.of(context).pop();
+    }
+  }
+
+  void _showSuccessMessage() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Saobraćajna dozvola je uspešno skenirana')),
+    );
+  }
+
+  void _showErrorMessage(dynamic error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Greška prilikom skeniranja dokumenta: $error')),
+    );
+  }
+
+  Future<void> _handleImageSelection(ImageSource source) async {
     try {
-      final ImagePicker picker = ImagePicker();
-      final XFile? image = await picker.pickImage(source: source);
+      final image = await _driverLicenseService.pickImage(source);
+      if (image == null) return;
 
-      if (image == null) {
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
-        return;
-      }
+      setState(() => _image = image);
+      if (!mounted) return;
 
-      setState(() {
-        _image = File(image.path);
-      });
+      _showLoadingDialog();
 
-      if (!context.mounted) return;
-
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const LoadingOverlay(
-          message: 'Skeniram saobraćajnu dozvolu...\nMolimo sačekajte',
-        ),
-      );
-
-      final azureService = AzureDocumentService.getInstance();
-      final result = await azureService.analyzeDriverLicense(File(image.path));
-      final carDetails = azureService.extractDriverLicenseFields(result);
+      final carDetails = await _driverLicenseService.scanDriverLicense(image);
       _formController.fillFromRegistration(carDetails);
 
-      if (!context.mounted) return;
-
-      Navigator.of(context).pop();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Saobraćajna dozvola je uspešno skenirana')),
-      );
+      if (!mounted) return;
+      _popIfPossible();
+      _showSuccessMessage();
     } catch (e) {
-      if (!context.mounted) return;
-
-      if (Navigator.canPop(context)) {
-        Navigator.of(context).pop();
-      }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Greška prilikom skeniranja dokumenta: $e')),
-      );
+      if (!mounted) return;
+      _popIfPossible();
+      _showErrorMessage(e);
     }
   }
 
@@ -153,8 +154,8 @@ class CarEntryScreenState extends State<CarEntryScreen> {
             children: [
               ImagePickerSection(
                 image: _image,
-                onCameraPressed: () => scanDriverLicense(context, ImageSource.camera),
-                onGalleryPressed: () => scanDriverLicense(context, ImageSource.gallery),
+                onCameraPressed: () => _handleImageSelection(ImageSource.camera),
+                onGalleryPressed: () => _handleImageSelection(ImageSource.gallery),
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
