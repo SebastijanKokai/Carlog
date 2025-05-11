@@ -31,8 +31,7 @@ class CarSearchService {
 
       return collection.docs.map((doc) => CarDetails.fromFirestore(doc, null)).toList();
     } catch (e) {
-      // TODO: Add proper error logging
-      rethrow;
+      throw Exception('Failed to search cars: ${e.toString()}');
     }
   }
 
@@ -45,8 +44,7 @@ class CarSearchService {
 
       return collection.docs.map((doc) => CarDetails.fromFirestore(doc, null)).toList();
     } catch (e) {
-      // TODO: Add proper error logging
-      rethrow;
+      throw Exception('Failed to fetch all cars: ${e.toString()}');
     }
   }
 
