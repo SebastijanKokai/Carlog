@@ -123,22 +123,6 @@ void main() {
     )).thenAnswer((_) async => http.Response('', statusCode));
   }
 
-  void setupNetworkErrorPostResponse({
-    required String url,
-    required List<int> imageBytes,
-  }) {
-    when(mockHttpClient.post(
-      Uri.parse(url),
-      headers: {
-        'Content-Type': 'application/json',
-        'Ocp-Apim-Subscription-Key': config.apiKey,
-      },
-      body: jsonEncode({
-        'base64Source': base64Encode(imageBytes),
-      }),
-    )).thenThrow(Exception('Network error'));
-  }
-
   void verifyPostRequest({
     required String url,
     required List<int> imageBytes,
@@ -268,6 +252,88 @@ void main() {
           'Failed to start analysis. Status code: 400',
         )),
       );
+    });
+  });
+
+  group('extractDriverLicenseFields', () {
+    test('should successfully extract fields from analysis result', () {
+      final analysisResult = {
+        'analyzeResult': {
+          'documents': [
+            {
+              'fields': {
+                'first_name': {'valueString': 'John'},
+                'last_name': {'valueString': 'Doe'},
+                'car_make': {'valueString': 'Toyota'},
+                'car_model': {'valueString': 'Corolla'},
+                'chassis_number': {'valueString': 'CH123456'},
+                'engine_displacement': {'valueString': '1.8L'},
+                'engine_power': {'valueString': '132hp'},
+                'type_of_fuel': {'valueString': 'Petrol'},
+                'license_plate': {'valueString': 'ABC123'},
+                'city': {'valueString': 'New York'},
+                'address': {'valueString': '123 Main St'},
+              }
+            }
+          ]
+        }
+      };
+
+      final result = service.extractDriverLicenseFields(analysisResult);
+
+      expect(result.ownerName, equals('Doe John'));
+      expect(result.make, equals('Toyota'));
+      expect(result.model, equals('Corolla'));
+      expect(result.chassisNumber, equals('CH123456'));
+      expect(result.engineDisplacement, equals('1.8L'));
+      expect(result.enginePower, equals('132hp'));
+      expect(result.typeOfFuel, equals('Petrol'));
+      expect(result.licensePlate, equals('ABC123'));
+      expect(result.city, equals('New York'));
+      expect(result.address, equals('123 Main St'));
+    });
+
+    test('should throw DocumentExtractionException when no documents found', () {
+      final analysisResult = {
+        'analyzeResult': {'documents': []}
+      };
+
+      expect(
+        () => service.extractDriverLicenseFields(analysisResult),
+        throwsA(isA<DocumentExtractionException>().having(
+          (e) => e.message,
+          'message',
+          contains('Error extracting fields'),
+        )),
+      );
+    });
+
+    test('should handle missing optional fields', () {
+      final minimalResult = {
+        'analyzeResult': {
+          'documents': [
+            {
+              'fields': {
+                'first_name': {'valueString': 'John'},
+                'last_name': {'valueString': 'Doe'},
+              }
+            }
+          ]
+        }
+      };
+
+      final result = service.extractDriverLicenseFields(minimalResult);
+
+      expect(result.ownerName, equals('Doe John'));
+      expect(result.make, equals(''));
+      expect(result.model, equals(''));
+      expect(result.chassisNumber, equals(''));
+      expect(result.engineDisplacement, equals(''));
+      expect(result.enginePower, equals(''));
+      expect(result.typeOfFuel, equals(''));
+      expect(result.licensePlate, equals(''));
+      expect(result.city, equals(''));
+      expect(result.address, equals(''));
     });
   });
 }
