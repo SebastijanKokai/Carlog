@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:carlog/extensions/theme_extensions.dart';
+import 'package:carlog/widgets/submit_button.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -32,7 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
     } on FirebaseAuthException catch (e) {
       _handleLoginError(e);
     } finally {
-      setState(() => _isLoading = false);
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -95,9 +98,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     passwordController: _passwordController,
                   ),
                   const SizedBox(height: 24),
-                  _LoginSubmitButton(
+                  SubmitButton(
                     isLoading: _isLoading,
                     onPressed: _login,
+                    text: 'Prijavi se',
                   ),
                 ],
               ),
@@ -121,7 +125,7 @@ class _LoginHeader extends StatelessWidget {
         ),
         const SizedBox(height: 32),
         Text(
-          'Dobrodošli',
+          'Dobro došli',
           style: context.headlineStyle,
           textAlign: TextAlign.center,
         ),
@@ -139,6 +143,26 @@ class _LoginFormFields extends StatelessWidget {
     required this.passwordController,
   });
 
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Unesite email adresu';
+    }
+    if (!value.contains('@')) {
+      return 'Unesite validnu email adresu';
+    }
+    return null;
+  }
+
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Unesite lozinku';
+    }
+    if (value.length < 6) {
+      return 'Lozinka mora imati najmanje 6 karaktera';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -147,77 +171,24 @@ class _LoginFormFields extends StatelessWidget {
           controller: emailController,
           decoration: InputDecoration(
             labelText: 'Email',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: context.inputBorder,
             prefixIcon: const Icon(Icons.email),
           ),
           keyboardType: TextInputType.emailAddress,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Unesite email adresu';
-            }
-            if (!value.contains('@')) {
-              return 'Unesite validnu email adresu';
-            }
-            return null;
-          },
+          validator: _validateEmail,
         ),
         const SizedBox(height: 16),
         TextFormField(
           controller: passwordController,
           decoration: InputDecoration(
             labelText: 'Lozinka',
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
+            border: context.inputBorder,
             prefixIcon: const Icon(Icons.lock),
           ),
           obscureText: true,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Unesite lozinku';
-            }
-            if (value.length < 6) {
-              return 'Lozinka mora imati najmanje 6 karaktera';
-            }
-            return null;
-          },
+          validator: _validatePassword,
         ),
       ],
-    );
-  }
-}
-
-class _LoginSubmitButton extends StatelessWidget {
-  final bool isLoading;
-  final VoidCallback onPressed;
-
-  const _LoginSubmitButton({
-    required this.isLoading,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return FilledButton(
-      onPressed: isLoading ? null : onPressed,
-      style: FilledButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-      ),
-      child: isLoading
-          ? const SizedBox(
-              height: 20,
-              width: 20,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
-            )
-          : const Text('Prijavi se'),
     );
   }
 }

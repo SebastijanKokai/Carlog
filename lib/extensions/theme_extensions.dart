@@ -13,4 +13,9 @@ extension ThemeX on BuildContext {
   Color get primaryColor => colorScheme.primary;
   Color get surfaceColor => colorScheme.surface;
   Color get outlineColor => colorScheme.outline.withAlpha(51);
+
+  InputBorder get inputBorder => OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: outlineColor),
+      );
 }
