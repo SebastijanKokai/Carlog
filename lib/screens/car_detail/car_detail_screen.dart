@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:carlog/constants/firebase_constants.dart';
 
 class CarDetailScreen extends StatelessWidget {
   final String carId;
@@ -14,7 +15,7 @@ class CarDetailScreen extends StatelessWidget {
         elevation: 0,
       ),
       body: FutureBuilder(
-        future: FirebaseFirestore.instance.collection('cars').doc(carId).get(),
+        future: FirebaseFirestore.instance.collection(FirebaseConstants.carsCollection).doc(carId).get(),
         builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (!snapshot.hasData) {
             return const Center(
@@ -24,18 +25,36 @@ class CarDetailScreen extends StatelessWidget {
 
           var carData = snapshot.data!;
 
-          final ownerName = carData.data().toString().contains('ownerName') ? carData.get('ownerName') : '';
-          final licensePlate = carData.data().toString().contains('licensePlate') ? carData.get('licensePlate') : '';
-          final city = carData.data().toString().contains('city') ? carData.get('city') : '';
-          final address = carData.data().toString().contains('address') ? carData.get('address') : '';
-          final make = carData.data().toString().contains('make') ? carData.get('make') : '';
-          final model = carData.data().toString().contains('model') ? carData.get('model') : '';
-          final chassisNumber = carData.data().toString().contains('chassisNumber') ? carData.get('chassisNumber') : '';
-          final engineDisplacement =
-              carData.data().toString().contains('engineDisplacement') ? carData.get('engineDisplacement') : '';
-          final enginePower = carData.data().toString().contains('enginePower') ? carData.get('enginePower') : '';
-          final typeOfFuel = carData.data().toString().contains('typeOfFuel') ? carData.get('typeOfFuel') : '';
-          final repairNotes = carData.data().toString().contains('repairNotes') ? carData.get('repairNotes') : '';
+          final ownerName = carData.data().toString().contains(FirebaseConstants.ownerName)
+              ? carData.get(FirebaseConstants.ownerName)
+              : '';
+          final licensePlate = carData.data().toString().contains(FirebaseConstants.licensePlate)
+              ? carData.get(FirebaseConstants.licensePlate)
+              : '';
+          final city =
+              carData.data().toString().contains(FirebaseConstants.city) ? carData.get(FirebaseConstants.city) : '';
+          final address = carData.data().toString().contains(FirebaseConstants.address)
+              ? carData.get(FirebaseConstants.address)
+              : '';
+          final make =
+              carData.data().toString().contains(FirebaseConstants.make) ? carData.get(FirebaseConstants.make) : '';
+          final model =
+              carData.data().toString().contains(FirebaseConstants.model) ? carData.get(FirebaseConstants.model) : '';
+          final chassisNumber = carData.data().toString().contains(FirebaseConstants.chassisNumber)
+              ? carData.get(FirebaseConstants.chassisNumber)
+              : '';
+          final engineDisplacement = carData.data().toString().contains(FirebaseConstants.engineDisplacement)
+              ? carData.get(FirebaseConstants.engineDisplacement)
+              : '';
+          final enginePower = carData.data().toString().contains(FirebaseConstants.enginePower)
+              ? carData.get(FirebaseConstants.enginePower)
+              : '';
+          final typeOfFuel = carData.data().toString().contains(FirebaseConstants.typeOfFuel)
+              ? carData.get(FirebaseConstants.typeOfFuel)
+              : '';
+          final repairNotes = carData.data().toString().contains(FirebaseConstants.repairNotes)
+              ? carData.get(FirebaseConstants.repairNotes)
+              : '';
 
           return SingleChildScrollView(
             child: Column(
