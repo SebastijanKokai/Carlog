@@ -23,4 +23,45 @@ extension ThemeX on BuildContext {
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide(color: outlineColor),
       );
+
+  TextStyle? get carHeaderTitle => textTheme.headlineSmall?.copyWith(
+        fontWeight: FontWeight.bold,
+        color: colorScheme.primary,
+      );
+
+  TextStyle get infoSectionTitle => TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: colorScheme.primary,
+      );
+
+  BoxDecoration get infoSectionDecoration => BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: colorScheme.outline.withAlpha(51),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(13),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      );
+
+  TextStyle get detailFieldLabel => TextStyle(
+        fontSize: 14,
+        color: colorScheme.onSurface.withAlpha(179),
+      );
+
+  TextStyle get detailFieldValue => const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+      );
+
+  BoxDecoration get detailFieldIconDecoration => BoxDecoration(
+        color: colorScheme.primary.withAlpha(26),
+        borderRadius: BorderRadius.circular(8),
+      );
 }

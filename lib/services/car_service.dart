@@ -21,4 +21,8 @@ class CarService {
       await _firestore.collection(FirebaseConstants.carsCollection).doc(existingId).update(carWithUserId.toFirestore());
     }
   }
+
+  Future<DocumentSnapshot> getCarDetails(String carId) async {
+    return await _firestore.collection(FirebaseConstants.carsCollection).doc(carId).get();
+  }
 }
