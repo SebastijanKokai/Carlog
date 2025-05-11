@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:carlog/screens/car_add/add_car_screen.dart';
+import 'package:carlog/screens/car_entry/car_entry_screen.dart';
 import 'package:carlog/models/car_details_model.dart';
 import 'package:carlog/screens/car_overview/widgets/car_list_body.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -234,7 +234,7 @@ class _CarOverviewScreenState extends State<CarOverviewScreen> {
           onPressed: () => Navigator.push(
             context,
             MaterialPageRoute(
-                builder: (context) => AddCarScreen(
+                builder: (context) => CarEntryScreen(
                       onCarUpdate: _fetchInitialCarDetails,
                       type: Add(),
                     )),

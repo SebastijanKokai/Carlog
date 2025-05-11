@@ -1,6 +1,5 @@
 import 'package:carlog/firebase_options.dart';
 import 'package:carlog/screens/auth/auth_wrapper.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

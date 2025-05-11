@@ -24,17 +24,17 @@ class Edit extends CarScreenType {
   final CarDetails car;
 }
 
-class AddCarScreen extends StatefulWidget {
-  const AddCarScreen({required this.onCarUpdate, required this.type, super.key});
+class CarEntryScreen extends StatefulWidget {
+  const CarEntryScreen({required this.onCarUpdate, required this.type, super.key});
 
   final VoidCallback onCarUpdate;
   final CarScreenType type;
 
   @override
-  AddCarScreenState createState() => AddCarScreenState();
+  CarEntryScreenState createState() => CarEntryScreenState();
 }
 
-class AddCarScreenState extends State<AddCarScreen> {
+class CarEntryScreenState extends State<CarEntryScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _ownerController = TextEditingController();
   final TextEditingController _licenseController = TextEditingController();
