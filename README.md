@@ -1,7 +1,7 @@
-# Carlog
+# ScanKeeper
 
 ## Overview
-Carlog is a Flutter app that scans and extracts data from driver's permit licenses using a custom-trained **Azure Document Intelligence** model. Users can log in with **Firebase Authentication**, manage extracted data with **CRUD** operations, and sync it to **Firestore**.
+ScanKeeper is a Flutter app that scans and extracts data from driver's permit licenses using a custom-trained **Azure Document Intelligence** model. Users can log in with **Firebase Authentication**, manage extracted data with **CRUD** operations, and sync it to **Firestore**.
 
 ## Features
 - Scan and extract data from driver's permit licenses (front & back) using Azure Document Intelligence.
@@ -45,8 +45,8 @@ Carlog is a Flutter app that scans and extracts data from driver's permit licens
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/SebastijanKokai/Carlog.git
-   cd Carlog
+   git clone https://github.com/SebastijanKokai/ScanKeeper.git
+   cd ScanKeeper
    ```
 2. Install dependencies:
    ```bash
