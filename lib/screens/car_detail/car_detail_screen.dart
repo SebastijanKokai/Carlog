@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:carlog/constants/firebase_constants.dart';
-import 'package:carlog/extensions/firestore_extensions.dart';
+import 'package:carlog/models/car_details_model.dart';
 import 'package:carlog/services/car_service.dart';
 import 'package:carlog/screens/car_detail/widgets/car_header.dart';
 import 'package:carlog/screens/car_detail/widgets/info_section.dart';
@@ -21,7 +20,7 @@ class CarDetailScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
       ),
-      body: FutureBuilder(
+      body: FutureBuilder<DocumentSnapshot>(
         future: _carService.getCarDetails(carId),
         builder: (context, AsyncSnapshot<DocumentSnapshot> snapshot) {
           if (!snapshot.hasData) {
@@ -36,28 +35,19 @@ class CarDetailScreen extends StatelessWidget {
             );
           }
 
-          var carData = snapshot.data!;
-
-          final ownerName = carData.getString(FirebaseConstants.ownerName);
-          final licensePlate = carData.getString(FirebaseConstants.licensePlate);
-          final city = carData.getString(FirebaseConstants.city);
-          final address = carData.getString(FirebaseConstants.address);
-          final make = carData.getString(FirebaseConstants.make);
-          final model = carData.getString(FirebaseConstants.model);
-          final chassisNumber = carData.getString(FirebaseConstants.chassisNumber);
-          final engineDisplacement = carData.getString(FirebaseConstants.engineDisplacement);
-          final enginePower = carData.getString(FirebaseConstants.enginePower);
-          final typeOfFuel = carData.getString(FirebaseConstants.typeOfFuel);
-          final repairNotes = carData.getString(FirebaseConstants.repairNotes);
+          final carDetails = CarDetails.fromFirestore(
+            snapshot.data! as DocumentSnapshot<Map<String, dynamic>>,
+            null,
+          );
 
           return SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 CarHeader(
-                  make: make,
-                  model: model,
-                  licensePlate: licensePlate,
+                  make: carDetails.make ?? '',
+                  model: carDetails.model ?? '',
+                  licensePlate: carDetails.licensePlate ?? '',
                 ),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -70,17 +60,17 @@ class CarDetailScreen extends StatelessWidget {
                           DetailField(
                             icon: Icons.person,
                             label: 'Ime vlasnika',
-                            value: ownerName,
+                            value: carDetails.ownerName,
                           ),
                           DetailField(
                             icon: Icons.location_city,
                             label: 'Grad',
-                            value: city,
+                            value: carDetails.city ?? '',
                           ),
                           DetailField(
                             icon: Icons.home,
                             label: 'Adresa',
-                            value: address,
+                            value: carDetails.address ?? '',
                           ),
                         ],
                       ),
@@ -91,41 +81,41 @@ class CarDetailScreen extends StatelessWidget {
                           DetailField(
                             icon: Icons.directions_car,
                             label: 'Marka',
-                            value: make,
+                            value: carDetails.make ?? '',
                           ),
                           DetailField(
                             icon: Icons.car_repair,
                             label: 'Model',
-                            value: model,
+                            value: carDetails.model ?? '',
                           ),
                           DetailField(
                             icon: Icons.numbers,
                             label: 'Broj šasije',
-                            value: chassisNumber,
+                            value: carDetails.chassisNumber ?? '',
                           ),
                           DetailField(
                             icon: Icons.speed,
                             label: 'Zapremina motora',
-                            value: engineDisplacement,
+                            value: carDetails.engineDisplacement ?? '',
                           ),
                           DetailField(
                             icon: Icons.power,
                             label: 'Snaga motora',
-                            value: enginePower,
+                            value: carDetails.enginePower ?? '',
                           ),
                           DetailField(
                             icon: Icons.local_gas_station,
                             label: 'Tip goriva',
-                            value: typeOfFuel,
+                            value: carDetails.typeOfFuel ?? '',
                           ),
                           DetailField(
                             icon: Icons.badge,
                             label: 'Registarske tablice',
-                            value: licensePlate,
+                            value: carDetails.licensePlate ?? '',
                           ),
                         ],
                       ),
-                      if (repairNotes.isNotEmpty) ...[
+                      if (carDetails.repairNotes?.isNotEmpty ?? false) ...[
                         const SizedBox(height: 24),
                         InfoSection(
                           title: 'Napomene',
@@ -133,7 +123,7 @@ class CarDetailScreen extends StatelessWidget {
                             DetailField(
                               icon: Icons.note,
                               label: 'Napomene o popravkama',
-                              value: repairNotes,
+                              value: carDetails.repairNotes ?? '',
                               isMultiline: true,
                             ),
                           ],
