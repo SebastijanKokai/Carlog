@@ -8,29 +8,15 @@ import 'package:carlog/services/azure_document_service/interfaces/document_servi
 import 'package:http/http.dart' as http;
 
 class AzureDocumentService implements DocumentService {
-  static AzureDocumentService? _instance;
   final AzureConfig config;
-  final http.Client _httpClient;
-  final ImageCompressionService _imageCompressionService;
+  final http.Client httpClient;
+  final ImageCompressionService imageCompressionService;
 
-  AzureDocumentService._({
+  AzureDocumentService({
     required this.config,
-    required http.Client httpClient,
-    required ImageCompressionService imageCompressionService,
-  })  : _httpClient = httpClient,
-        _imageCompressionService = imageCompressionService;
-
-  static AzureDocumentService getInstance({
-    http.Client? httpClient,
-    ImageCompressionService? imageCompressionService,
-  }) {
-    _instance ??= AzureDocumentService._(
-      config: AzureConfig.fromEnv(),
-      httpClient: httpClient ?? http.Client(),
-      imageCompressionService: imageCompressionService ?? ImageCompressionService.getInstance(),
-    );
-    return _instance!;
-  }
+    required this.httpClient,
+    required this.imageCompressionService,
+  });
 
   @override
   Future<Map<String, dynamic>> analyzeDriverLicense(File imageFile) async {
@@ -52,7 +38,7 @@ class AzureDocumentService implements DocumentService {
     final fileSizeInMB = fileSize / (1024 * 1024);
 
     if (fileSizeInMB > 4) {
-      return await _imageCompressionService.compressImageFile(imageFile);
+      return await imageCompressionService.compressImageFile(imageFile);
     }
     return await imageFile.readAsBytes();
   }
@@ -64,7 +50,7 @@ class AzureDocumentService implements DocumentService {
   }
 
   Future<http.Response> _startAnalysis(String url, List<int> imageBytes) async {
-    final response = await _httpClient.post(
+    final response = await httpClient.post(
       Uri.parse(url),
       headers: {
         'Content-Type': 'application/json',
@@ -109,7 +95,7 @@ class AzureDocumentService implements DocumentService {
   }
 
   Future<Map<String, dynamic>> _checkAnalysisStatus(String operationLocation) async {
-    final response = await _httpClient.get(
+    final response = await httpClient.get(
       Uri.parse(operationLocation),
       headers: {
         'Ocp-Apim-Subscription-Key': config.apiKey,
@@ -139,6 +125,6 @@ class AzureDocumentService implements DocumentService {
   }
 
   void dispose() {
-    _httpClient.close();
+    httpClient.close();
   }
 }
