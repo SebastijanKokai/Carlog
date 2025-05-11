@@ -9,6 +9,11 @@ extension ThemeX on BuildContext {
         fontWeight: FontWeight.bold,
         color: colorScheme.primary,
       );
+  TextStyle get sectionTitle =>
+      textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+      ) ??
+      const TextStyle(fontWeight: FontWeight.bold);
 
   Color get primaryColor => colorScheme.primary;
   Color get surfaceColor => colorScheme.surface;

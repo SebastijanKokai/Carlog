@@ -2,9 +2,10 @@ import 'dart:io';
 
 import 'package:carlog/models/car_details_model.dart';
 import 'package:carlog/screens/car_entry/car_entry_form_controller.dart';
+import 'package:carlog/screens/car_entry/widgets/additional_info_section.dart';
+import 'package:carlog/screens/car_entry/widgets/owner_data_section.dart';
+import 'package:carlog/screens/car_entry/widgets/vehicle_data_section.dart';
 import 'package:carlog/services/azure_document_service.dart';
-import 'package:carlog/widgets/form_section.dart';
-import 'package:carlog/widgets/form_text_field.dart';
 import 'package:carlog/widgets/image_picker_section.dart';
 import 'package:carlog/widgets/loading_overlay.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -166,83 +167,11 @@ class CarEntryScreenState extends State<CarEntryScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    FormSection(
-                      title: 'Podaci o vlasniku',
-                      fields: [
-                        FormTextField(
-                          controller: _formController.ownerController,
-                          label: 'Ime vlasnika',
-                          icon: Icons.person,
-                          validator: _formController.validateOwner,
-                        ),
-                        FormTextField(
-                          controller: _formController.cityController,
-                          label: 'Grad',
-                          icon: Icons.location_city,
-                        ),
-                        FormTextField(
-                          controller: _formController.addressController,
-                          label: 'Adresa',
-                          icon: Icons.home,
-                        ),
-                      ],
-                    ),
+                    OwnerDataSection(formController: _formController),
                     const SizedBox(height: 24),
-                    FormSection(
-                      title: 'Podaci o vozilu',
-                      fields: [
-                        FormTextField(
-                          controller: _formController.makeController,
-                          label: 'Marka',
-                          icon: Icons.directions_car,
-                          validator: _formController.validateMake,
-                        ),
-                        FormTextField(
-                          controller: _formController.modelController,
-                          label: 'Model',
-                          icon: Icons.car_repair,
-                          validator: _formController.validateModel,
-                        ),
-                        FormTextField(
-                          controller: _formController.chassisController,
-                          label: 'Broj šasije',
-                          icon: Icons.numbers,
-                        ),
-                        FormTextField(
-                          controller: _formController.engineDisplacementController,
-                          label: 'Zapremina motora',
-                          icon: Icons.speed,
-                        ),
-                        FormTextField(
-                          controller: _formController.enginePowerController,
-                          label: 'Snaga motora',
-                          icon: Icons.power,
-                        ),
-                        FormTextField(
-                          controller: _formController.typeOfFuelController,
-                          label: 'Vrsta goriva',
-                          icon: Icons.local_gas_station,
-                        ),
-                        FormTextField(
-                          controller: _formController.licenseController,
-                          label: 'Registracione tablice',
-                          icon: Icons.badge,
-                          validator: _formController.validateLicense,
-                        ),
-                      ],
-                    ),
+                    VehicleDataSection(formController: _formController),
                     const SizedBox(height: 24),
-                    FormSection(
-                      title: 'Dodatne informacije',
-                      fields: [
-                        FormTextField(
-                          controller: _formController.repairController,
-                          label: 'Napomene',
-                          icon: Icons.note_add,
-                          maxLines: 3,
-                        ),
-                      ],
-                    ),
+                    AdditionalInfoSection(formController: _formController),
                     const SizedBox(height: 32),
                     ElevatedButton(
                       onPressed: () => _saveCar(),
