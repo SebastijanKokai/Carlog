@@ -2,7 +2,7 @@
     <application
         android:label="Servis knjiga"
         android:name="${applicationName}"
-        android:icon="@drawable/id_card">
+        android:icon="@mipmap/launcher_icon">
         <activity
             android:name=".MainActivity"
             android:exported="true"
